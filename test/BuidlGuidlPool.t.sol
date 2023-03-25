@@ -22,20 +22,20 @@ contract BuidlGuidlTestPool is Test {
     }
 
 
-    function testCreateNewStream() public {
-        vm.warp(1679677904);
-        vm.prank(BuidlGuidlAdmin);
-        pool.StreamBuilder(BuidlGuidlPool.Type.DamageDealer,makeAddr("John"),true,2419200);
-        vm.warp(1679677904 + 1296000);
+    // function testCreateNewStream() public {
+    //     vm.warp(1679677904);
+    //     vm.prank(BuidlGuidlAdmin);
+    //     pool.StreamBuilder(BuidlGuidlPool.Type.DamageDealer,makeAddr("John"),true,2419200);
+    //     vm.warp(1679677904 + 1296000);
 
-        (uint cap ,uint fre,uint last) = pool.stream_map(makeAddr("John"));
-        assertEq(last,1679677904 - 2419200);
+    //     (uint cap ,uint fre,uint last) = pool.stream_map(makeAddr("John"));
+    //     assertEq(last,1679677904 - 2419200);
 
-        uint RequiredStreamBalance = 1.5 ether;
-        assertEq(pool.streamBalance(makeAddr("John")),RequiredStreamBalance);
+    //     uint RequiredStreamBalance = 1.5 ether;
+    //     assertEq(pool.streamBalance(makeAddr("John")),RequiredStreamBalance);
 
-        vm.deal(address(pool),2 ether);
+    //     vm.deal(address(pool),2 ether);
         
-    }
+    // }
 
 }

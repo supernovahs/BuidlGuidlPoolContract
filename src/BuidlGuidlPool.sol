@@ -15,14 +15,15 @@ contract BuidlGuidlPool {
 
    // Events
   event Withdraw( address indexed to, uint256 amount, string reason );
-  event Deposit( address indexed from, uint256 amount, string reason );
 
 // Stream Struct for inidvidual builders
   struct Stream {
     uint cap ;
     uint frequency;
     uint last;
+    uint totalStream;
   }
+  
 
   //enum 
   enum Type{
@@ -51,12 +52,14 @@ contract BuidlGuidlPool {
 /// @param _startsFull Whether the stream starts full or not
 /// @param _frequency The frequency of the stream
 /// @dev Only called by BuidlGuidl
-    function StreamBuilder(Type stream,address _builder,bool _startsFull, uint _frequency) external onlyBuidlGuidl {
+    function StreamBuilder(Type stream, uint  _totalStream, address _builder,bool _startsFull, uint _frequency) external onlyBuidlGuidl {
         require(stream_map[_builder].cap ==0);
         stream_map[_builder].cap = stream == Type.DamageDealer ? 1.5 ether : 0.5 ether;
         stream_map[_builder].frequency = _frequency;
         stream_map[_builder].last = _startsFull ? (block.timestamp - _frequency) : block.timestamp;
-
+        if(_totalStream !=0){
+        stream_map[_builder].totalStream = _totalStream;
+        }
     }
 
 
@@ -81,6 +84,7 @@ contract BuidlGuidlPool {
         uint last = stream.last;
         uint frequency = stream.frequency;
         uint totalAmountCanWithdraw = streamBalance(msg.sender);
+        uint _totalStream = stream.totalStream;
         require(totalAmountCanWithdraw>=_amount,"not enough in the stream");
         uint cappedLast = block.timestamp - frequency;
 
@@ -90,7 +94,22 @@ contract BuidlGuidlPool {
 
         stream_map[msg.sender].last = last + ((block.timestamp - last) * _amount / totalAmountCanWithdraw);
         emit Withdraw( msg.sender, _amount, reason );
+        if(_totalStream !=0){
+        require(_totalStream - _amount >=1,"not enough in the stream"); // 1 wei will always be maintained to prevent converting finite streams to infinite.
+        stream_map[msg.sender].totalStream = _totalStream - _amount;
+        }
         Address.sendValue(payable(msg.sender), _amount);
+    }
+
+
+/// @notice Convert a finite stream to an infinite stream
+/// @param _builder The address of the _builder
+/// @dev Only called by BuidlGuidl
+    function convertFiniteStreamToInfinite(address _builder) external onlyBuidlGuidl{
+        Stream memory  stream = stream_map[_builder];
+        uint _totalStream = stream.totalStream;
+        require(_totalStream !=0,"stream is already infinite");
+        stream_map[_builder].totalStream = 0;
     }
 
 /// @dev Receive Ether Freely
